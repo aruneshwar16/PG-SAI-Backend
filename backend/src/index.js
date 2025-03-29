@@ -2,8 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const path = require('path');
 const authRoutes = require('./routes/auth');
 const reviewRoutes = require('./routes/reviews');
+const galleryRoutes = require('./routes/gallery');
 
 dotenv.config();
 
@@ -24,6 +26,16 @@ app.use(cors({
 
 // Middleware for parsing JSON
 app.use(express.json());
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// Create uploads directory if it doesn't exist
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -68,6 +80,7 @@ connectDB();
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/gallery', galleryRoutes);
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {
