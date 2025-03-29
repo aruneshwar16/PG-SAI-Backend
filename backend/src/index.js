@@ -19,10 +19,14 @@ app.use(cors({
     'http://localhost:3000',
     'https://pg-sai-backend.onrender.com'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  credentials: true,
+  maxAge: 86400 // 24 hours
 }));
+
+// Add OPTIONS handling for preflight requests
+app.options('*', cors());
 
 // Middleware for parsing JSON
 app.use(express.json());
