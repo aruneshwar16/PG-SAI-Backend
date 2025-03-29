@@ -41,19 +41,47 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Server is working!',
+    status: 'active',
+    version: '1.0.0',
+    endpoints: {
+      test: '/test',
+      auth: {
+        register: '/api/auth/register [POST]',
+        login: '/api/auth/login [POST]'
+      },
+      reviews: {
+        getAll: '/api/reviews [GET]',
+        create: '/api/reviews [POST]',
+        myReviews: '/api/reviews/my-reviews [GET]'
+      },
+      gallery: {
+        getAll: '/api/gallery [GET]',
+        upload: '/api/gallery [POST]'
+      }
+    }
+  });
+});
+
+// Test route
+app.get('/test', (req, res) => {
+  res.json({ 
+    message: 'Backend server is running',
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
-// Test route
-app.get('/test', (req, res) => {
-  res.json({ message: 'Backend server is running' });
-});
-
 // MongoDB Connection
-console.log('Attempting to connect to MongoDB...'); // Debug log
+console.log('Attempting to connect to MongoDB...');
 
 mongoose.set('strictQuery', false);
 
@@ -85,6 +113,28 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/gallery', galleryRoutes);
+
+// Catch-all route for undefined routes
+app.use('*', (req, res) => {
+  res.status(404).json({
+    message: 'Route not found',
+    availableEndpoints: {
+      auth: {
+        register: '/api/auth/register',
+        login: '/api/auth/login'
+      },
+      reviews: {
+        getAllReviews: '/api/reviews',
+        createReview: '/api/reviews',
+        getUserReviews: '/api/reviews/my-reviews'
+      },
+      gallery: {
+        getAllImages: '/api/gallery',
+        uploadImage: '/api/gallery'
+      }
+    }
+  });
+});
 
 const PORT = process.env.PORT || 5002;
 app.listen(PORT, () => {
