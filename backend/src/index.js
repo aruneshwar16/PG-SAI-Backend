@@ -10,7 +10,12 @@ dotenv.config();
 const app = express();
 
 // CORS configuration
-app.use(cors());  // Allow all origins during development
+app.use(cors({
+  origin: ['http://saipg-womens-hostel-azure.vercel.app', 'http://localhost:3000'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 
 // Middleware for parsing JSON
 app.use(express.json());
