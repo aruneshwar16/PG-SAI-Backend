@@ -13,20 +13,20 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    'http://saipg-womens-hostel-azure.vercel.app',
-    'https://saipg-womens-hostel-azure.vercel.app',
-    'http://localhost:3000',
-    'https://pg-sai-backend.onrender.com'
-  ],
+  origin: true, // Allow all origins temporarily
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Length', 'X-Requested-With'],
   credentials: true,
-  maxAge: 86400 // 24 hours
+  maxAge: 86400, // 24 hours
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
-// Add OPTIONS handling for preflight requests
-app.options('*', cors());
+// Handle preflight requests
+app.options('*', (req, res) => {
+  res.status(204).end();
+});
 
 // Middleware for parsing JSON
 app.use(express.json());
