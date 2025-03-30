@@ -27,7 +27,13 @@ app.use(cors({
     'http://localhost:4200',
     'http://192.168.1.1:3000',
     'http://192.168.1.1:5002',
-    'http://192.168.1.1:8080'
+    'http://192.168.1.1:8080',
+    'http://192.168.1.1',
+    'http://192.168.1.1:80',
+    'http://192.168.1.1:443',
+    'http://10.0.0.1',
+    'http://10.0.0.1:80',
+    'http://10.0.0.1:443'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
@@ -50,7 +56,7 @@ app.use(cors({
     'Access-Control-Allow-Origin',
     'Access-Control-Allow-Credentials'
   ],
-  credentials: true,
+  credentials: false,
   maxAge: 86400, // 24 hours
   preflightContinue: false,
   optionsSuccessStatus: 204
@@ -63,7 +69,7 @@ app.options('*', (req, res) => {
     res.header('Access-Control-Allow-Origin', origin);
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Credentials', 'false');
     res.header('Access-Control-Max-Age', '86400');
   }
   res.status(204).end();
@@ -74,7 +80,7 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
   if (origin) {
     res.header('Access-Control-Allow-Origin', origin);
-    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Credentials', 'false');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
     res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
   }
