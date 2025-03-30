@@ -13,10 +13,43 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: true, // Allow all origins temporarily
+  origin: [
+    'http://saipg-womens-hostel-azure.vercel.app',
+    'https://saipg-womens-hostel-azure.vercel.app',
+    'http://localhost:3000',
+    'https://pg-sai-backend.onrender.com',
+    'http://localhost:5002',
+    'http://127.0.0.1:5002',
+    'http://127.0.0.1:3000',
+    'capacitor://localhost',
+    'http://localhost',
+    'http://localhost:8080',
+    'http://localhost:4200',
+    'http://192.168.1.1:3000',
+    'http://192.168.1.1:5002',
+    'http://192.168.1.1:8080'
+  ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Content-Length', 'X-Requested-With'],
+  allowedHeaders: [
+    'Content-Type',
+    'Authorization',
+    'X-Requested-With',
+    'Accept',
+    'Origin',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Headers',
+    'Access-Control-Allow-Methods',
+    'Access-Control-Allow-Credentials',
+    'Access-Control-Request-Method',
+    'Access-Control-Request-Headers'
+  ],
+  exposedHeaders: [
+    'Content-Length',
+    'X-Requested-With',
+    'Authorization',
+    'Access-Control-Allow-Origin',
+    'Access-Control-Allow-Credentials'
+  ],
   credentials: true,
   maxAge: 86400, // 24 hours
   preflightContinue: false,
@@ -25,7 +58,27 @@ app.use(cors({
 
 // Handle preflight requests
 app.options('*', (req, res) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+  }
   res.status(204).end();
+});
+
+// Add CORS headers to all responses
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    res.header('Access-Control-Allow-Origin', origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  }
+  next();
 });
 
 // Middleware for parsing JSON
