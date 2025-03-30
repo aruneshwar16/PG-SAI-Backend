@@ -84,11 +84,11 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log('🔑 Login request received:', email);
+    console.log('🔑 Login request received:', { email, hasPassword: !!password });
 
     // Validate required fields
     if (!email || !password) {
-      console.log('❌ Missing required fields for login');
+      console.log('❌ Missing required fields for login:', { email: !!email, password: !!password });
       return res.status(400).json({ 
         message: 'Email and password are required',
         missingFields: {
@@ -101,21 +101,27 @@ router.post('/login', async (req, res) => {
     // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
-      console.log('❌ Login failed: User not found');
-      return res.status(401).json({ message: 'Invalid email or password' });
+      console.log('❌ Login failed: User not found for email:', email);
+      return res.status(401).json({ 
+        message: 'Invalid email or password',
+        details: 'User not found'
+      });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log('❌ Login failed: Incorrect password');
-      return res.status(401).json({ message: 'Invalid email or password' });
+      console.log('❌ Login failed: Incorrect password for user:', email);
+      return res.status(401).json({ 
+        message: 'Invalid email or password',
+        details: 'Incorrect password'
+      });
     }
 
     // Generate token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '24h' });
 
-    console.log('✅ Login successful:', user.username);
+    console.log('✅ Login successful:', { username: user.username, email: user.email });
     res.json({ 
       token, 
       userId: user._id, 
@@ -123,11 +129,15 @@ router.post('/login', async (req, res) => {
       message: '✅ Login successful' 
     });
   } catch (error) {
-    console.error('⚠️ Login error:', error);
+    console.error('⚠️ Login error:', {
+      message: error.message,
+      stack: error.stack,
+      email: req.body.email
+    });
     res.status(500).json({ 
       message: '❌ Error logging in', 
       error: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });
