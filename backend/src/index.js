@@ -6,6 +6,7 @@ const path = require('path');
 const authRoutes = require('./routes/auth');
 const reviewRoutes = require('./routes/reviews');
 const galleryRoutes = require('./routes/gallery');
+const jwt = require('jsonwebtoken');
 
 dotenv.config();
 
@@ -14,26 +15,9 @@ const app = express();
 // CORS configuration
 app.use(cors({
   origin: [
-    'http://saipg-womens-hostel-azure.vercel.app',
     'https://saipg-womens-hostel-azure.vercel.app',
     'http://localhost:3000',
-    'https://pg-sai-backend.onrender.com',
-    'http://localhost:5002',
-    'http://127.0.0.1:5002',
-    'http://127.0.0.1:3000',
-    'capacitor://localhost',
-    'http://localhost',
-    'http://localhost:8080',
-    'http://localhost:4200',
-    'http://192.168.1.1:3000',
-    'http://192.168.1.1:5002',
-    'http://192.168.1.1:8080',
-    'http://192.168.1.1',
-    'http://192.168.1.1:80',
-    'http://192.168.1.1:443',
-    'http://10.0.0.1',
-    'http://10.0.0.1:80',
-    'http://10.0.0.1:443'
+    'http://localhost:5002'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
@@ -41,25 +25,10 @@ app.use(cors({
     'Authorization',
     'X-Requested-With',
     'Accept',
-    'Origin',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Headers',
-    'Access-Control-Allow-Methods',
-    'Access-Control-Allow-Credentials',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
-  ],
-  exposedHeaders: [
-    'Content-Length',
-    'X-Requested-With',
-    'Authorization',
-    'Access-Control-Allow-Origin',
-    'Access-Control-Allow-Credentials'
+    'Origin'
   ],
   credentials: false,
-  maxAge: 86400, // 24 hours
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  maxAge: 86400
 }));
 
 // Handle preflight requests
@@ -100,6 +69,66 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
+// Authentication middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+    console.log('No token provided');
+    return res.status(401).json({ 
+      message: 'Authentication required',
+      error: 'No token provided'
+    });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = decoded;
+    next();
+  } catch (error) {
+    console.error('Token verification failed:', error);
+    return res.status(403).json({ 
+      message: 'Invalid token',
+      error: error.message
+    });
+  }
+};
+
+// Test endpoint with better error handling
+app.get('/api/test', (req, res) => {
+  try {
+    console.log('Test endpoint hit:', {
+      timestamp: new Date().toISOString(),
+      origin: req.headers.origin,
+      method: req.method
+    });
+    
+    res.json({ 
+      message: 'Backend is running',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV,
+      status: 'success',
+      cors: {
+        origin: req.headers.origin,
+        allowed: true
+      }
+    });
+  } catch (error) {
+    console.error('Test endpoint error:', error);
+    res.status(500).json({
+      message: 'Error in test endpoint',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/reviews', authenticateToken, reviewRoutes);
+app.use('/api/gallery', authenticateToken, galleryRoutes);
+
 // Root route
 app.get('/', (req, res) => {
   res.json({
@@ -107,7 +136,7 @@ app.get('/', (req, res) => {
     status: 'active',
     version: '1.0.0',
     endpoints: {
-      test: '/test',
+      test: '/api/test',
       auth: {
         register: '/api/auth/register [POST]',
         login: '/api/auth/login [POST]'
@@ -124,54 +153,6 @@ app.get('/', (req, res) => {
     }
   });
 });
-
-// Test route
-app.get('/test', (req, res) => {
-  res.json({ 
-    message: 'Backend server is running',
-    environment: process.env.NODE_ENV || 'development'
-  });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
-});
-
-// MongoDB Connection
-console.log('Attempting to connect to MongoDB...');
-
-mongoose.set('strictQuery', false);
-
-const connectDB = async () => {
-  try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    });
-    console.log(`MongoDB Connected successfully✅: ${conn.connection.host}`);
-    console.log('Database name:', conn.connection.name);
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      code: error.code
-    });
-    process.exit(1);
-  }
-};
-
-// Connect to MongoDB
-connectDB();
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/reviews', reviewRoutes);
-app.use('/api/gallery', galleryRoutes);
 
 // Catch-all route for undefined routes
 app.use('*', (req, res) => {
